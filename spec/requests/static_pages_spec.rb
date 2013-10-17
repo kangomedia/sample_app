@@ -28,9 +28,36 @@ describe "Static pages" do
       it "should render the user's feed" do
         user.feed.each do |item|
           expect(page).to have_selector("li##{item.id}", text: item.content)
+          
         end
       end
-    end
+      
+      describe "follower/following counts" do
+        let(:other_user) { FactoryGirl.create(:user) }
+        before do
+          other_user.follow!(user)
+          visit root_path
+        end
+        
+        it { should have_link("0 following", href: following_user_path(user)) }
+        it { should have_link("1 followers", href: followers_user_path(user)) }
+      end
+      
+      it "should display correct pluralization" do
+        expect(page).to have_selector('span', text: 'microposts')
+      end
+      
+      describe "should display pagination" do
+        before do 
+          30.times { FactoryGirl.create(:micropost, user: user) }
+          sign_in user
+          visit root_path
+        end
+        after { Micropost.delete_all}
+        
+        it { should have_selector('div.pagination') }
+      end
+    end      
   end
 
   describe "Help page" do
